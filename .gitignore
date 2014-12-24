@@ -1,1 +1,7 @@
+*.db
 *.py[co]
+*.pyproj
+*.sqlite3
+
+
+obj/

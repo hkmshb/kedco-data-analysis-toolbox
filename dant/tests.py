@@ -2,6 +2,7 @@
 Defines unit tests for the data analysis toolbox.
 """
 import os
+import sqlite3
 import unittest
 
 from xlrd import open_workbook
@@ -118,9 +119,6 @@ class IntrospectingFile(unittest.TestCase):
             lines = f.readlines()
             self.assertEqual(lines[0].strip(), 'This is line 2')
             self.assertEqual(len(lines), 6)
-
-
-
 
 
 

@@ -42,16 +42,17 @@ class XlSheet(object):
     def ncols(self):
         return self._sheet.ncols
     
-    def getrows(self):
+    def getrows(self, start_row=0):
         def rows_gen():
-            for i in range(self.nrows):
+            for i in range(start_row, self.nrows):
                 row = []
                 for j in range(self.ncols):
                     value = self._sheet.cell_value(i, j)
                     row.append(value.strip() if type(value) is str else value)
                 yield row
+                
         
-        if self.__rows_gen is None:
+        if self.__rows_gen is None or start_row > 0:
             self.__rows_gen = rows_gen()
         return self.__rows_gen
      
