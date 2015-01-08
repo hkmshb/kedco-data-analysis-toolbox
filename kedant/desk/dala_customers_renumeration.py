@@ -44,6 +44,10 @@ def create_db(db_path, force=False):
 
 
 def load_xl2db(xlfilepath, sheetname, header_cols, insfunc, start_row=0):
+    """Extracts data from an Excel sheet and loads into a database table.
+    
+    insfunc: insert function used to load data into database
+    """
     def is_header(row):
         hText = ('!!'.join(header_cols)).lower()
         rText = ('!!'.join([str(r) for r in row[:len(header_cols)]])).lower()
@@ -94,11 +98,31 @@ def do4sqlite3(dbpath, xlfilepath, sheetname, header_cols):
         print('Done!')
 
 
-def do4mssql(xlfilepath, sheetname, header_cols, table):
+def do4books(xlfilepath, sheetname, header_cols, table):
     # connect to database
     conn = pyodbc.connect('driver={sql server};server=.\sqlexpress;'
                           'database=kedco;trusted_connection=yes;')
-    text = "INSERT INTO %s VALUES (?, ?, ?, ?, ?, ?, ?, ?)" % table
+    text = "INSERT INTO %s (book) VALUES (?)" % (table,)
+    try:
+        with conn:
+            load_xl2db(
+                xlfilepath, sheetname, header_cols,
+                lambda r: conn.execute(text, r[1:]) if r else None
+            )
+    except Exception as ex:
+        print('Error encountered: %s' % ex)
+    finally:
+        conn.close()
+        print('Done!')
+
+
+def do4mssql(xlfilepath, sheetname, header_cols, table, isactive, bUnit):
+    # connect to database
+    conn = pyodbc.connect('driver={sql server};server=.\sqlexpress;'
+                          'database=kedco;trusted_connection=yes;')
+    text = "INSERT INTO %s VALUES (?, ?, ?, ?, ?, ?, ?, ?, %s, '%s')" % (
+                table, (1 if isactive else 0), bUnit
+           )
     try:
         with conn:
             load_xl2db(
@@ -150,13 +174,12 @@ def do4mssql_orbis(xlfilepath, sheetname, header_cols, table, start_row=0):
 
 
 if __name__ == '__main__':
-    BASE_DIR = "C:\Users\Klone\Documents\WorkDocuments\KEDCO\Dala Customers\#data-source"
+    BASE_DIR = "C:\Users\Klone\Documents\WorkDocuments\KEDCO\Dala Customers"
     
     # load active customers
-    for x in ("Quad Orbis Customer Count-2.xls",):
+    for x in ("NEW_BOOKS_FOR_DALA_ACCTS.xls",):
         xlfilepath = os.path.join(BASE_DIR, x)
-        do4mssql_orbis(xlfilepath, 'Customers', ['0.0', 'Customer Type'], '[tmp].[TempQuadOrbis]',
-                       start_row=34966)
+        do4books(xlfilepath, 'new books', ['SN', 'BOOK'], '[tmp].[Books]')
         print('Done For %s!' % x)
 
 
